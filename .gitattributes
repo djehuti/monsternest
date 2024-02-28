@@ -1,3 +1,7 @@
 * text=auto
 *.png binary
 *.jpg binary
+*.d64 binary
+*.prg binary
+*.seq binary
+*.p00 binary
