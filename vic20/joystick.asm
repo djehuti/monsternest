@@ -38,9 +38,16 @@
 *=$1c00       ; load address (7168)
 
 ; Constants
+
+; Our output addresses
+diradd = $0001
+dirsub = $0002
+
+; I/O addresses
 via1 = $9110  ; The base address of 6522 VIA #1
 via2 = $9120  ; The base address of 6522 VIA #2
 
+; I/O register offsets from via1/via2
 portb = 0     ; Offset of input port B
 porta = 1     ; Offset of input port A
 dirb  = 2     ; Offset of direction register B
@@ -48,26 +55,12 @@ dira  = 3     ; Offset of direction register A
 
 ; These are all on VIA #1, port A
 ; These bits are 0 when the switches are closed, 1 when open
-joy1a0 = %00000100  ; switch 0 - up
-joy1a1 = %00001000  ; switch 1 - down
-joy1a2 = %00010000  ; switch 2 - left
-fire1a = %00100000  ; fire button
-
-; This on is on VIA #2, port B
-joy2b3 = %10000000  ; switch 3 - right
-
-; Bit masks (single-byte)
-allbits    = %11111111
-initial1a  = %10000000                          ; Serial ATN out, all alse in.
-initial2b  = allbits                            ; all out
-relevant1a = joy1a0 | joy1a1 | joy1a2 | fire1a  ; %00111100 ($3c)
-relevant2b = joy2b3                             ; %10000000 ($80)
-mask1a     = allbits ^ relevant1a               ; %11000011 ($c3)
-mask2b     = allbits ^ relevant2b               ; %01111111 ($7f)
-
-; Our outputs
-diradd = $0001
-dirsub = $0002
+joyup    = %00000100  ; switch 0 - up
+joydown  = %00001000  ; switch 1 - down
+joyleft  = %00010000  ; switch 2 - left
+joyfire  = %00100000  ; switch 4 - fire
+; This one is on VIA #2, port B
+joyright = %10000000  ; switch 3 - right
 
 ; Values we will put in those
 column = 1
@@ -76,67 +69,56 @@ row    = 22
 ; ////////////////////////////////////////////////////////////////////////////
 ; Program Starts Here
 start
-    ; Set the VIA #1 port A direction bits to their initial state.
-    lda #initial1a
-    sta via1+dira
-
     ; Clear our outputs.
     lda #0
     sta diradd
     sta dirsub
 
-    ; Set the direction of the relevant VIA#2 port B bits to input
-    lda #mask2b
+    ; Set the joystick bit of the VIA #2 port B to input.
+    lda via2+dirb
+    tay                        ; Save this value in Y for later
+    and #(%11111111 ^ joyright)
     sta via2+dirb
 
-    ; This is the bug. We're checking all 8 bits, but we only care about bit 7 (joy2b3).
+    ; Set the joystick bits of the VIA #1 Port A to input.
+    lda via1+dira
+    and #(%11111111 ^ (joyup | joydown | joyleft | joyfire))
+    sta via1+dira
+
 checkright
-    ;     10000000 relevant2b (=joy2b3)
-    ;     0        pattern we're checking equality to
-    ;      1110111 bits we are checking and expecting but don't actually care about (BUG)
-    ldx #%01110111
-    cpx via2+portb
-    bne restorevia2
+    lda via2+portb
+    and #joyright
+    bne checkdown
 
     ; Put 1 column in the "add" output (move right)
     lda #column
     sta diradd
-
-    ; Set all of the VIA 2B port pins back to output.
-restorevia2
-    lda #initial2b
-    sta via2+dirb
+    jmp finished
 
 checkdown
-    ;     00111100 relevant1a
-    ;       1101   pattern we want - bits 2/4/5 on (open), bit 3 off (closed) - down ONLY
-    ;     01    10 bits we are checking and expecting but don't actually care about (BUG)
-    ldx #%01110110
-    cpx via1+porta
+    lda via1+porta
+    tax                        ; Save this value in X for reuse
+    and #joydown
     bne checkleft
 
     ; Put 1 row in the "add" output (move down)
     lda #row
     sta diradd
+    jmp finished
 
 checkleft
-    ;     00111100 relevant1a
-    ;       1011   pattern we want - bits 2/3/5 on (open), bit 4 off (closed) - left ONLY
-    ;     01    10 bits we are checking and expecting but don't actually care about (BUG)
-    ldx #%01101110
-    cpx via1+porta
+    txa                        ; reuse the X value
+    and #joyleft
     bne checkup
 
     ; Put 1 column in the "subtract" output (move left)
     lda #column
     sta dirsub
+    jmp finished
 
 checkup
-    ;     00111100 relevant1a
-    ;       1110   pattern we want - bits 3/4/5 on (open), bit 2 off (closed) - up ONLY
-    ;     01    10 bits we are checking and expecting but don't actually care about (BUG)
-    ldx #%01111010
-    cpx via1+porta
+    txa                        ; reuse the X value
+    and #joyup
     bne finished
 
     ; Put 1 row in the "subtract" output (move up)
@@ -144,4 +126,7 @@ checkup
     sta dirsub
 
 finished
+    ; Restore the state of VIA #1, which we saved in the Y register.
+    tya
+    sta via2+dirb
     rts
