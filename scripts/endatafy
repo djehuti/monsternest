@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""Modify a DATA block in a BASIC program."""
+
+import argparse
+import re
+import sys
+
+
+VIC20_COLUMNS = 22
+MAX_EDITOR_LINES = 4
+A_SKOCHE = 3
+
+DEFAULT_MAX_LINE_LENGTH = MAX_EDITOR_LINES * VIC20_COLUMNS - A_SKOCHE
+DEFAULT_START_ADDRESS = 7168
+DEFAULT_STARTING_LINE_NUMBER = 10
+DEFAULT_INCREMENT = 1
+DEFAULT_MAX_LINE_NUMBER = 20
+DEFAULT_VARNAME = "m"
+DEFAULT_TMPVARNAME = "n"
+
+
+def read_basic_file(basfile: str) -> dict[int, str]:
+    """Read a BASIC source file and returns the lines as a dictionary
+    of integer (line number) to string (text of line). The string does
+    include the line number and any leading or trailing whitespace.
+    """
+    lines = {}
+    linepat = r"^\s*([0-9]{1,5})\s"
+    with open(basfile, "rt") as f:
+        for l in f.readlines():
+            m = re.search(linepat, l, re.MULTILINE)
+            if m:
+                lineno = int(m.group(0))
+                lines[lineno] = l.rstrip('\n\r')
+            else:
+                raise RuntimeError(f"unexpected line in input:\n\"\"\"{l}\"\"\"")
+    return lines
+
+
+def read_asm_file(asmfile: str) -> bytes:
+    """Read an object file (.o65, binary) and return it as a bytes.
+    """
+    with open(asmfile, "rb") as f:
+        return f.read()
+
+
+def generate_data_statements(asmfile: str,
+                             startaddress: int,
+                             varname: str,
+                             tmpvarname: str,
+                             startline: int,
+                             increment: int,
+                             limit: int,
+                             linelen: int) -> dict[int, str]:
+    """Read an object file (.o65, binary) and return it as BASIC DATA
+    statement lines, as a dict of integer (line number) to string
+    (text of line). The string does include the line number.
+    """
+    curline = startline
+    output = {}
+    def addline(l: str):
+        nonlocal curline
+        nonlocal output
+        output[curline] = l
+        curline = curline + increment
+        if curline >= limit:
+            raise RuntimeError(f"data length is too long for line count")
+    line = None
+    cont = read_asm_file(asmfile)
+    addline(f"{curline} for{varname}=0to{len(cont)-1}:read{tmpvarname}:" +
+            f"poke{startaddress}+{varname},{tmpvarname}:next")
+    for b in cont:
+        if line is None:
+            line = f"{curline} data{b}"
+            continue
+        newvalue = f",{b}"
+        if len(line) + len(newvalue) > linelen:
+            addline(line)
+            line = f"{curline} data{b}"
+        else:
+            line = line + newvalue
+    if line:
+        addline(line)
+    return output
+
+
+def endatafy(basfile: str,
+             asmfile: str,
+             startaddress: int,
+             varname: str,
+             tmpvarname: str,
+             startline: int,
+             increment: int,
+             limit: int,
+             linelen: int) -> None:
+    """Read the input basic file and the input object file (.o65, binary)
+    and replaces lines between [startline,limit) with newly-generated lines
+    of data statements representing those lines.
+    """
+    # Read the program into a dict[int, str].
+    basic = read_basic_file(basfile)
+    # All of the line numbers in the program, in sorted order.
+    linenos = sorted(basic.keys())
+    # Exclude the ones between [startline,limit)
+    linenos = [n for n in linenos if n < startline or n > limit]
+
+    # Read the object file and generate the new source as dict[int, str).
+    data = generate_data_statements(asmfile,
+                                    startaddress,
+                                    varname,
+                                    tmpvarname,
+                                    startline,
+                                    increment,
+                                    limit,
+                                    linelen)
+    # All of the line numbers in the data, in sorted order.
+    datanos = sorted(data.keys())
+    # Double-check that we didn't generate any data lines outside the range.
+    for n in datanos:
+        if n < startline or n >= limit:
+            raise RuntimeError(f"unexpected line number {n} in data " +
+                               f"is outside the range [{startline},{limit})")
+        basic[n] = data[n]
+        linenos.append(n)
+    linenos = sorted(linenos)
+
+    # Now spit the program back out.
+    for n in linenos:
+        print(basic[n])
+
+
+def main(argv: list[str]) -> int:
+    """Program entry point."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    # accept arguments: starting line number, max line number, line length,
+    # basic source file, asm input file (& choose output file or modify-in-place)
+    parser.add_argument("basfile")
+    parser.add_argument("asmfile")
+    args = parser.parse_args(argv)
+    try:
+        endatafy(basfile=args.basfile,
+                asmfile=args.asmfile,
+                startaddress=DEFAULT_START_ADDRESS,
+                varname=DEFAULT_VARNAME,
+                tmpvarname=DEFAULT_TMPVARNAME,
+                startline=DEFAULT_STARTING_LINE_NUMBER,
+                increment=DEFAULT_INCREMENT,
+                limit=DEFAULT_MAX_LINE_NUMBER,
+                linelen=DEFAULT_MAX_LINE_LENGTH)
+        return 0
+    except Exception as e:
+        print(e, file=sys.stderr)
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))

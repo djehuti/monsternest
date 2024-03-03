@@ -8,12 +8,12 @@
 21 data145,173,32,145,41,128,208,7,169,1,133,1,76,73,28,173,17,145,170,41,8,208,7,169
 22 data22,133,1,76,73,28,138,41,16,208,7,169,1,133,2,76,73,28,138,41,4,208,4,169,22
 23 data133,2,152,141,34,145,96
-41 print"{clr}{grn}skill level?"
-42 getsl$:ifsl$=""then42
-43 ifval(sl$)=1thensr=11:goto50
-44 ifval(sl$)=2thensr=9:goto50
-46 ifval(sl$)=3thensr=7:goto50
-47 goto42
+30 print"{clr}{grn}skill level?"
+35 getsl$:ifsl$=""then35
+40 ifval(sl$)=1thensr=11:goto50
+41 ifval(sl$)=2thensr=9:goto50
+42 ifval(sl$)=3thensr=7:goto50
+43 goto35
 50 print "{clr}":forx=38400to38905:pokex,0:nextx
 60 forx=1to75:y=int(rnd(1)*500)+7680:pokey,87:next
 70 pokea,42:sys7168:jr=peek(1):jo=peek(2)
@@ -37,22 +37,26 @@
 15030 return
 15100 fors=1tosr : rem shoot right
 15110 sp=a+s:ifpeek(sp)=87then20000
-15111 pokesp,46:fort=1to10:nextt:pokesp,32
+15111 qz=peek(sp)
+15112 pokesp,46:fort=1to10:nextt:pokesp,qz
 15120 nexts:poke36877,0
 15130 return
 15200 fors=22to(sr*22)step22 : rem shoot down
 15210 sp=a+s:ifpeek(sp)=87then20000
-15211 pokesp,46:fort=1to10:nextt:pokesp,32
+15211 qz=peek(sp)
+15212 pokesp,46:fort=1to10:nextt:pokesp,qz
 15220 nexts:poke36877,0
 15230 return
 15300 fors=1tosr : rem shoot left
 15310 sp=a-s:ifpeek(sp)=87then20000 : rem shoot left
-15311 pokesp,46:fort=1to10:nextt:pokesp,32
+15311 qz=peek(sp)
+15312 pokesp,46:fort=1to10:nextt:pokesp,qz
 15320 nexts:poke36877,0
 15330 return
 15400 fors=22to(sr*22)step22 : rem shoot up
 15410 sp=a-s:ifpeek(sp)=87then20000
-15411 pokesp,46:fort=1to10:nextt:pokesp,32
+15411 qz=peek(sp)
+15412 pokesp,46:fort=1to10:nextt:pokesp,qz
 15420 nexts:poke36877,0
 15430 return
 20000 remmonster death
@@ -89,4 +93,6 @@
 50086 pokeqb,86
 50090 nextqb
 50100 return
+55000 print"{blu}{clr}":poke36879,238
+55001 end
 63990 print"{clr}{pur}your score was";ys;"!"
