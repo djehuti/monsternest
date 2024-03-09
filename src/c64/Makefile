@@ -1,11 +1,6 @@
-# Makefile
+PROGRAMS=monsternest.p00
+OUTDIR=out
+BASIC_VERSION=2
+PLATFORM_ARGS=-l 0801
 
-.PHONY: all clean
-
-all: out/monsternest
-
-out/monsternest: monsternest.bas
-	petcat -w2 -l 0801 -f -o out/monsternest -- monsternest.bas
-
-clean:
-	/bin/rm out/monsternest
+include ../make.inc
