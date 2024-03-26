@@ -4,7 +4,11 @@
 			"path": "."
 		}
 	],
-	"settings": {},
+	"settings": {
+		"files.associations": {
+			"*.basl": "bas",
+		}
+	},
 	"extensions": {
 		"recommendations": [
 			"rosc.vs64"

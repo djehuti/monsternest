@@ -5,3 +5,4 @@
 *.prg binary
 *.seq binary
 *.p00 binary
+*.basl binary
