@@ -11,7 +11,8 @@
 	},
 	"extensions": {
 		"recommendations": [
-			"rosc.vs64"
+			"rosc.vs64",
+			"yazwh0.bitmagic"
 		]
 	}
 }

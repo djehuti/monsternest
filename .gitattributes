@@ -2,7 +2,12 @@
 *.png binary
 *.jpg binary
 *.d64 binary
+*.D64 binary
 *.prg binary
+*.PRG binary
 *.seq binary
+*.SEQ binary
 *.p00 binary
+*.P00 binary
 *.basl binary
+*.BASL binary
