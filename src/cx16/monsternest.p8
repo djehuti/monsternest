@@ -392,7 +392,7 @@ main {
         score += 10
         eggsShot += 1
         txt.setcc2(xcoord, ycoord, blankTile, color.Transparent)
-        if !autohatch and floats.rnd() > 0.55 {
+        if not autohatch and floats.rnd() > 0.55 {
            playKillEggSound()
            return
         }
