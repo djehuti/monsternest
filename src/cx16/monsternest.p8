@@ -158,7 +158,8 @@ main {
         }
     }
 
-    ; Actually play the game. If this function returns, play again.
+    ; Actually play the game. If this function returns, the player has opted
+    ; not to play again.
     sub playGame() {
     top:
         askSkill()
@@ -359,6 +360,7 @@ main {
     }
 
     sub shoot(byte sx, byte sy) {
+        playShootSound()
         bool hit = false
         for i in 1 to shotRange {
             xcoord = ((playerX as byte) + (i as byte)*sx) as ubyte
@@ -386,17 +388,18 @@ main {
     }
 
     sub killegg(bool autohatch) {
+    top:
         score += 10
         eggsShot += 1
         txt.setcc2(xcoord, ycoord, blankTile, color.Transparent)
-        if autohatch or floats.rnd() < 0.55 {
-            hatch(xcoord, ycoord)
+        if !autohatch and floats.rnd() > 0.55 {
+           playKillEggSound()
+           return
         }
-        return
-    }
-
-    sub hatch(ubyte eggx, ubyte eggy) {
+        ubyte eggx = xcoord
+        ubyte eggy = ycoord
         txt.setcc2(eggx, eggy, dragonTile, color.Green)
+        playHatchSound()
         bool hit = false
         ; Choose a direction
         byte dir = 1
@@ -434,7 +437,8 @@ main {
             repeat 4 { maint() } ; we're not cycling the main loop, so just do this part
         }
         if hit {
-            killegg(true)
+           autohatch = true
+           goto top
         }
         return
     }
@@ -480,6 +484,18 @@ main {
     }
 
     sub playDieSound() {
+        return
+    }
+
+    sub playShootSound() {
+        return
+    }
+
+    sub playKillEggSound() {
+        return
+    }
+
+    sub playHatchSound() {
         return
     }
 
