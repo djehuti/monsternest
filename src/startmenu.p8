@@ -12,8 +12,6 @@
 startMenu {
     ; Enter the start menu.
     sub enter() {
-        oldInhibit = player.inhibit
-        player.inhibit = true
         player.erase()
 
         ; install our own keyboard and joystick handlers
@@ -32,19 +30,30 @@ startMenu {
     ; Go back to the game.
     sub exit() {
         restoreScreen()
-        void framer.addOneShot(monsternest.installHandlers, 0)
-        txt.color(color.Black)
-        txt.plot(7, 10)
-        txt.print("                  ")
-        player.inhibit = oldInhibit
+        restoreHandlers()
     }
 
     ; Put our handlers in place of the game handlers.
     sub installHandlers() {
+        oldKeyHandler = framer.keyHandler
+        oldButtonHandler = framer.buttonHandler
+        oldStartHandler = framer.startSelectHandler
+        oldDpadHandler = framer.dpadHandler
+        oldInhibit = player.inhibit
+
         framer.keyHandler = &keystroke
         framer.buttonHandler = 0
         framer.startSelectHandler = &startSelect
         framer.dpadHandler = 0
+        player.inhibit = true
+    }
+
+    sub restoreHandlers() {
+        framer.keyHandler = oldKeyHandler
+        framer.buttonHandler = oldButtonHandler
+        framer.startSelectHandler = oldStartHandler
+        framer.dpadHandler = oldDpadHandler
+        player.inhibit = oldInhibit
     }
 
     sub keystroke() {
@@ -69,8 +78,15 @@ startMenu {
 
     sub restoreScreen() {
         ; TODO
+        txt.color(color.Black)
+        txt.plot(7, 10)
+        txt.print("                  ")
         return
     }
 
     bool oldInhibit
+    uword oldKeyHandler
+    uword oldButtonHandler
+    uword oldStartHandler
+    uword oldDpadHandler
 }
