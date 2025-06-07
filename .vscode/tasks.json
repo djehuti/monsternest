@@ -6,12 +6,9 @@
         {
             "label": "Make",
             "type": "shell",
-            "command": "(cd src/c128 && make)",
+            "command": "(cd src && make)",
             "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            "group": "build"
         }
     ]
 }
