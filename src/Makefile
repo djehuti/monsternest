@@ -5,7 +5,7 @@
 
 PROGS=monsternest.prg
 
-P8COMPILE=p8compile
+P8COMPILE=prog8c
 P8FLAGS=-target cx16 -quietasm -warnshadow -srcdirs lib
 
 SRCS=\

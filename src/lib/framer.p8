@@ -237,8 +237,8 @@ framerPrivate {
 
     ; Data for the frame tasks table.
     ubyte @zp frameTaskCount = 0
-    const ubyte MAXFRAMETASKS = 32      ; should be way more than enough, can't
-    uword[MAXFRAMETASKS] frameTasks = 0 ; be >128 due to prog8 array limit.
+    const ubyte MAXFRAMETASKS = 32  ; should be way more than enough, can't
+    uword[MAXFRAMETASKS] frameTasks ; be >128 due to prog8 array limit.
 
     ; Data for the one-shot work functions. This is a ringbuffer.
     ; Each spot in the ringbuffer occupies 2 words; one word is the
@@ -250,8 +250,8 @@ framerPrivate {
     const ubyte ONESHOTS = 128 ; must be a power of 2, limited to 128 by prog8.
 
     ; With ONESHOTS=128 (the max) these tables occupy 512 bytes.
-    uword[ONESHOTS] oneShots = 0
-    uword[ONESHOTS] oneShotArgs = 0
+    uword[ONESHOTS] oneShots
+    uword[ONESHOTS] oneShotArgs
 
     ; If head==tail, the ringbuffer is empty. The indices wrap around when
     ; ANDed with the mask (why it has to be a power of 2).
